@@ -1,6 +1,7 @@
 package main;
 
 import dbconnection.DBConnection;
+import graph.Nodes;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -26,7 +27,8 @@ public class Main extends Application{
             @Override
             public void handle(ActionEvent event) {
                 System.out.println("Hello World!");
-                DBConnection.getCityData();
+                //DBConnection.getCityData();
+                Nodes.generateNodes(2);
             }
         });
 
