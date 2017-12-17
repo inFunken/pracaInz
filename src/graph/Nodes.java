@@ -6,8 +6,7 @@ import gui.Popups;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Nodes extends DBConnection{
@@ -19,6 +18,7 @@ public class Nodes extends DBConnection{
         PreparedStatement preparedStatement1, preparedStatement2;
         ArrayList<String[]> cityData = new ArrayList<>();
         int amountOfCities = 0;
+        List<Integer> generatedNodes = new ArrayList<>();
 
         try {
             preparedStatement1 = connection.prepareStatement(selectCityCount);
@@ -37,10 +37,12 @@ public class Nodes extends DBConnection{
                 }
                 cityData.add(row);
             }
+
         }
         catch (SQLException e) {
             Popups.genericError(e.toString());
         }
+        /*
         System.out.println(amountOfCities);
         for (String[] p : cityData) {
             for (int i = 0; i < p.length; i++) {
@@ -49,24 +51,28 @@ public class Nodes extends DBConnection{
                     System.out.println();
             }
         }
-
+        */
         int wholePopulation = Integer.parseInt(cityData.get(cityData.size()-1)[5]);
 
         System.out.println(wholePopulation);
 
-        for (int i = 1; i <= amount; i ++){
+        while(generatedNodes.size() < amount) {
             int randomNum = ThreadLocalRandom.current().nextInt(1, wholePopulation + 1);
             for (String[] p : cityData) {
                 int populationRollingSum = Integer.parseInt(p[p.length-1]);
+                int cityId = Integer.parseInt(p[0]);
                 String cityName = p[1];
                 if (randomNum > populationRollingSum) {
                 }
                 else {
-                    System.out.println("random: " + randomNum + " population rolling sum: " + populationRollingSum + " city name: " + cityName);
+                    generatedNodes.add(cityId);
+                    System.out.println("random: " + randomNum + " population rolling sum: " + populationRollingSum + " city id: " + cityId + " city name: " + cityName);
                     break;
                 }
             }
-            System.out.println(randomNum);
+            for(int cityId: generatedNodes) {
+                System.out.println(cityId);
+            }
         }
 
 
