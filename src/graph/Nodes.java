@@ -2,6 +2,8 @@ package graph;
 
 import dbconnection.DBConnection;
 import gui.Popups;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,24 +13,42 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Nodes extends DBConnection{
 
+    public static void insertNewGraph(){
+        String insertNewGraph = "insert into graph values (seqGraph.nextval, sysdate, null)";
+        try {
+            PreparedStatement preparedStatement;
+            preparedStatement = connection.prepareStatement(insertNewGraph);
+            preparedStatement .executeUpdate();
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+    }
+
+    public static void insertNode(int nodeId, int cityId){
+        String insertNode = "insert into node values (?, seqGraph.currval, ?)";
+        try {
+            PreparedStatement preparedStatement;
+            preparedStatement = connection.prepareStatement(insertNode);
+            preparedStatement.setInt(1, nodeId);
+            preparedStatement.setInt(2, cityId);
+            preparedStatement .executeUpdate();
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+    }
+
     public static void generateNodes(int amount){
         String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM FROM CITY_DATA order by 1";
-        String selectCityCount = "Select count(*)  from CITY_DATA";
-
-        PreparedStatement preparedStatement1, preparedStatement2;
+        PreparedStatement preparedStatement;
         ArrayList<String[]> cityData = new ArrayList<>();
-        int amountOfCities = 0;
-        List<Integer> generatedNodes = new ArrayList<>();
+
+        List<Double[]> generatedNodes = new ArrayList<>();
 
         try {
-            preparedStatement1 = connection.prepareStatement(selectCityCount);
-            ResultSet rs1 = preparedStatement1.executeQuery(selectCityCount);
-            while (rs1.next()) {
-                amountOfCities = rs1.getInt("count(*)");
-            }
-
-            preparedStatement2 = connection.prepareStatement(selectCityData);
-            ResultSet rs2 = preparedStatement2.executeQuery(selectCityData );
+            preparedStatement = connection.prepareStatement(selectCityData);
+            ResultSet rs2 = preparedStatement.executeQuery(selectCityData );
             int columnCount = rs2.getMetaData().getColumnCount();
             while (rs2.next()) {
                 String[] row = new String[columnCount];
@@ -42,46 +62,63 @@ public class Nodes extends DBConnection{
         catch (SQLException e) {
             Popups.genericError(e.toString());
         }
-        /*
-        System.out.println(amountOfCities);
-        for (String[] p : cityData) {
-            for (int i = 0; i < p.length; i++) {
-                System.out.print(p[i] + "\t");
-                if (i == p.length-1)
-                    System.out.println();
-            }
-        }
-        */
+
         int wholePopulation = Integer.parseInt(cityData.get(cityData.size()-1)[5]);
 
         System.out.println(wholePopulation);
+
+        insertNewGraph();
+
 
         while(generatedNodes.size() < amount) {
             int randomNum = ThreadLocalRandom.current().nextInt(1, wholePopulation + 1);
             for (String[] p : cityData) {
                 int populationRollingSum = Integer.parseInt(p[p.length-1]);
-                int cityId = Integer.parseInt(p[0]);
+                double cityId = Integer.parseInt(p[0]);
+                double geoWidth = Double.parseDouble(p[2]), geoHeight = Double.parseDouble(p[3]);
                 String cityName = p[1];
                 if (randomNum > populationRollingSum) {
                 }
                 else {
-                    generatedNodes.add(cityId);
+                    Double[] cityLocation = new Double[3];
+                    for (int i = 0; i < 3; i++){
+                        if (i==0)
+                            cityLocation[i] = cityId;
+                        else if (i==1)
+                            cityLocation[i] = geoWidth;
+                        else if (i==2)
+                            cityLocation[i] = geoHeight;
+                    }
+                    generatedNodes.add(cityLocation);
                     System.out.println("random: " + randomNum + " population rolling sum: " + populationRollingSum + " city id: " + cityId + " city name: " + cityName);
+                    insertNode(generatedNodes.size(), (int) cityId);
                     break;
                 }
             }
-            for(int cityId: generatedNodes) {
-                System.out.println(cityId);
+        }
+        for(Double[] cityList: generatedNodes) {
+            for(double cityProperties: cityList) {
+                System.out.println(cityProperties);
             }
         }
+    }
 
+    public static ObservableList getExistingGraphs(){
+        String selectExistingGraphView = "select * from existingGraphView";
+        PreparedStatement preparedStatement;
+        //List<Object> existingGraphs = new ArrayList<>();
+        ObservableList<Graph> existingGraphsObservableList = FXCollections.observableArrayList();
+        try {
+            preparedStatement = connection.prepareStatement(selectExistingGraphView);
+            ResultSet resultSet = preparedStatement.executeQuery(selectExistingGraphView );
+            while (resultSet.next()) {
+                existingGraphsObservableList.add(new Graph(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getDate(4)));
+                }
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
 
-
-
-
-
-
-
-
+        return existingGraphsObservableList;
     }
 }
