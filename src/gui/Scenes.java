@@ -121,9 +121,7 @@ public class Scenes {
             stage.setScene(startingScene(stage));
         });
 
-        Point2D pointTest = new Point2D(21.02,52.12);
         Circle circeTest = new Circle(21.02,52.12, 1);
-        Circle circeTest2 = new Circle(11.02,52.12, 1);
 
         newGraphMenu.getChildren().addAll(btnBack, lblAmount, txtfAmount, btnGenerateNewGraph, circeTest);
         //newGraphMenu.getChildren().addAll(circeTest2);
@@ -132,6 +130,29 @@ public class Scenes {
         newGraphMenu.setSpacing(20);
         stackPane.getChildren().add(newGraphMenu);
         return newGraphScene;
+    }
+
+    public javafx.scene.Scene graphScene(Stage stage){
+        StackPane stackPane = new StackPane();
+        Scene graphScene = new Scene(stackPane, 1280, 720);
+        graphScene.getStylesheets().add("style.css");
+
+        VBox graphMenu = new VBox();
+
+        Button btnBack = new Button();
+        btnBack.setPrefSize(270,30);
+        btnBack.setText("Back");
+        btnBack.setOnAction((ActionEvent event) -> {
+            System.out.println("Back");
+            stage.setScene(startingScene(stage));
+        });
+
+        graphMenu.getChildren().addAll(btnBack);
+        graphMenu.setAlignment(Pos.TOP_LEFT);
+        graphMenu.setPadding(new Insets(30, 30, 30, 30));
+        graphMenu.setSpacing(20);
+        stackPane.getChildren().add(graphMenu);
+        return graphScene;
     }
 
 
@@ -184,11 +205,12 @@ public class Scenes {
             try {
                 Graph selectedGraph = tableExistingGraph.getSelectionModel().getSelectedItem();
                 System.out.println("dupa" + selectedGraph.getGraphId());
+                stage.setScene(graphScene(stage));
             }
             catch (NullPointerException e) {
                 Popups.genericError("Choose one of the existing graphs!");
             }
-            stage.setScene(startingScene(stage));
+
 
         });
 
