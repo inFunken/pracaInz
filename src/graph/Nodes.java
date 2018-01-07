@@ -39,11 +39,26 @@ public class Nodes extends DBConnection{
         }
     }
 
+
+    public static void insertConnection(int connectionId, int node1, int node2){
+        String insertConnection = "insert into connection values (?, seqGraph.currval, ?, ?)";
+        try {
+            PreparedStatement preparedStatement;
+            preparedStatement = connection.prepareStatement(insertConnection);
+            preparedStatement.setInt(1, connectionId);
+            preparedStatement.setInt(2, node1);
+            preparedStatement.setInt(3, node2);
+            preparedStatement .executeUpdate();
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+    }
+
     public static void generateNodes(int amount){
         String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM FROM CITY_DATA order by 1";
         PreparedStatement preparedStatement;
         ArrayList<String[]> cityData = new ArrayList<>();
-
         List<Double[]> generatedNodes = new ArrayList<>();
 
         try {
@@ -98,7 +113,27 @@ public class Nodes extends DBConnection{
         }
         for(Double[] cityList: generatedNodes) {
             for(double cityProperties: cityList) {
-                System.out.println(cityProperties);
+                System.out.print(cityProperties + "\t");
+            }
+            System.out.println();
+        }
+
+        generateConnections(50, generatedNodes);
+
+    }
+
+    public static void generateConnections(double probability, List<Double[]> nodes){
+
+        double randomNum;
+        int connectionId=1;
+        for (int i = 0; i < nodes.size(); i++) {
+            for (int j = i + 1; j < nodes.size(); j++) {
+                randomNum = ThreadLocalRandom.current().nextDouble(0, 100 + 1);
+                if (randomNum <= probability) {
+                    System.out.println("Connection   " + i + "\t" + j);
+                    insertConnection(connectionId, i + 1, j + 1);
+                    connectionId += 1;
+                }
             }
         }
     }
