@@ -48,7 +48,7 @@ public class Nodes extends DBConnection{
             preparedStatement.setInt(1, connectionId);
             preparedStatement.setInt(2, node1);
             preparedStatement.setInt(3, node2);
-            preparedStatement .executeUpdate();
+            preparedStatement.executeUpdate();
         }
         catch (SQLException e) {
             Popups.genericError(e.toString());
@@ -155,5 +155,27 @@ public class Nodes extends DBConnection{
         }
 
         return existingGraphsObservableList;
+    }
+
+    public static ObservableList getConnections(int graphId){
+        String selectConnections = "select * from (select c.CONNECTION_ID connection_id, c.NODE1_ID node1, n.city_id city1, cd.city_name city1_name, cd.GEO_HEIGHT height1, cd.GEO_WIDTH width1 from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node1_id inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node1 inner join (select c.CONNECTION_ID connection_id,c.NODE2_ID node2, n.city_id city2, cd.city_name city2_name, cd.GEO_HEIGHT height2, cd.GEO_WIDTH width2 from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node2_id inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node2 on node1.connection_id=node2.connection_id";
+
+        PreparedStatement preparedStatement;
+        ObservableList<Connections> connectionsObservableList = FXCollections.observableArrayList();
+        try {
+            preparedStatement = connection.prepareStatement(selectConnections);
+            preparedStatement.setInt(1, graphId);
+            preparedStatement.setInt(2, graphId);
+            System.out.println(selectConnections);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                connectionsObservableList.add(new Connections(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4), resultSet.getDouble(5),resultSet.getDouble(6),resultSet.getInt(7),resultSet.getInt(8),resultSet.getInt(9),resultSet.getString(10), resultSet.getDouble(11),resultSet.getDouble(12)));
+            }
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+
+        return connectionsObservableList;
     }
 }
