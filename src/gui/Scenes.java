@@ -1,5 +1,6 @@
 package gui;
 
+import graph.Connections;
 import graph.Graph;
 import graph.Nodes;
 import javafx.application.Platform;
@@ -132,7 +133,7 @@ public class Scenes {
         return newGraphScene;
     }
 
-    public javafx.scene.Scene graphScene(Stage stage){
+    public javafx.scene.Scene graphScene(Stage stage, int graphId){
         StackPane stackPane = new StackPane();
         Scene graphScene = new Scene(stackPane, 1280, 720);
         graphScene.getStylesheets().add("style.css");
@@ -147,7 +148,65 @@ public class Scenes {
             stage.setScene(startingScene(stage));
         });
 
-        graphMenu.getChildren().addAll(btnBack);
+        Label lblList = new Label();
+        lblList.setText("List of nodes and connections in this graph:");
+        lblList.setFont(new Font(20));
+
+        ObservableList<Connections> connectionList = Nodes.getConnections(graphId);
+
+        TableColumn<Connections, Integer> connectionIdColumn = new TableColumn<>("Connection ID");
+        connectionIdColumn.setMinWidth(50);
+        connectionIdColumn.setCellValueFactory(new PropertyValueFactory<>("connectionId"));
+
+
+        TableColumn<Connections, Integer> nodeId1Column = new TableColumn<>("Node1 ID");
+        nodeId1Column.setMinWidth(50);
+        nodeId1Column.setCellValueFactory(new PropertyValueFactory<>("nodeId1"));
+
+        TableColumn<Connections, Integer> cityId1Column = new TableColumn<>("City1 ID");
+        cityId1Column.setMinWidth(50);
+        cityId1Column.setCellValueFactory(new PropertyValueFactory<>("cityId1"));
+
+        TableColumn<Connections, String> cityName1Column = new TableColumn<>("City1 Name");
+        cityName1Column.setMinWidth(100);
+        cityName1Column.setCellValueFactory(new PropertyValueFactory<>("cityName1"));
+
+        TableColumn<Connections, Double> cityHeight1Column = new TableColumn<>("City1 Height");
+        cityHeight1Column.setMinWidth(50);
+        cityHeight1Column.setCellValueFactory(new PropertyValueFactory<>("height1"));
+
+        TableColumn<Connections, Double> cityWidth1Column = new TableColumn<>("City1 Width");
+        cityWidth1Column.setMinWidth(50);
+        cityWidth1Column.setCellValueFactory(new PropertyValueFactory<>("width1"));
+
+
+        TableColumn<Connections, Integer> nodeId2Column = new TableColumn<>("Node2 ID");
+        nodeId2Column.setMinWidth(50);
+        nodeId2Column.setCellValueFactory(new PropertyValueFactory<>("nodeId2"));
+
+        TableColumn<Connections, Integer> cityId2Column = new TableColumn<>("City2 ID");
+        cityId2Column.setMinWidth(50);
+        cityId2Column.setCellValueFactory(new PropertyValueFactory<>("cityId2"));
+
+        TableColumn<Connections, String> cityName2Column = new TableColumn<>("City2 Name");
+        cityName2Column.setMinWidth(100);
+        cityName2Column.setCellValueFactory(new PropertyValueFactory<>("cityName2"));
+
+        TableColumn<Connections, Double> cityHeight2Column = new TableColumn<>("City2 Height");
+        cityHeight2Column.setMinWidth(50);
+        cityHeight2Column.setCellValueFactory(new PropertyValueFactory<>("height2"));
+
+        TableColumn<Connections, Double> cityWidth2Column = new TableColumn<>("City2 Width");
+        cityWidth2Column.setMinWidth(50);
+        cityWidth2Column.setCellValueFactory(new PropertyValueFactory<>("width2"));
+
+
+        TableView<Connections> tableExistingGraph = new TableView();
+        tableExistingGraph.getColumns().addAll(connectionIdColumn, nodeId1Column, cityId1Column, cityName1Column, cityHeight1Column, cityWidth1Column, nodeId2Column, cityId2Column, cityName2Column, cityHeight2Column, cityWidth2Column);
+        tableExistingGraph.setItems(connectionList);
+        tableExistingGraph.setMaxWidth(350);
+
+        graphMenu.getChildren().addAll(btnBack,tableExistingGraph);
         graphMenu.setAlignment(Pos.TOP_LEFT);
         graphMenu.setPadding(new Insets(30, 30, 30, 30));
         graphMenu.setSpacing(20);
@@ -204,8 +263,8 @@ public class Scenes {
         btnLoadGraph.setOnAction((ActionEvent event) -> {
             try {
                 Graph selectedGraph = tableExistingGraph.getSelectionModel().getSelectedItem();
-                System.out.println("dupa" + selectedGraph.getGraphId());
-                stage.setScene(graphScene(stage));
+                System.out.println("Selected Graph" + selectedGraph.getGraphId());
+                stage.setScene(graphScene(stage, selectedGraph.getGraphId()));
             }
             catch (NullPointerException e) {
                 Popups.genericError("Choose one of the existing graphs!");
