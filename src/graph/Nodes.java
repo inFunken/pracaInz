@@ -56,7 +56,8 @@ public class Nodes extends DBConnection{
     }
 
     public static void generateNodes(int amount){
-        String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM FROM CITY_DATA order by 1";
+        String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM " +
+                "FROM CITY_DATA order by 1";
         PreparedStatement preparedStatement;
         ArrayList<String[]> cityData = new ArrayList<>();
         List<Double[]> generatedNodes = new ArrayList<>();
@@ -72,7 +73,6 @@ public class Nodes extends DBConnection{
                 }
                 cityData.add(row);
             }
-
         }
         catch (SQLException e) {
             Popups.genericError(e.toString());
@@ -92,9 +92,7 @@ public class Nodes extends DBConnection{
                 double cityId = Integer.parseInt(p[0]);
                 double geoWidth = Double.parseDouble(p[2]), geoHeight = Double.parseDouble(p[3]);
                 String cityName = p[1];
-                if (randomNum > populationRollingSum) {
-                }
-                else {
+                if (randomNum <= populationRollingSum) {
                     Double[] cityLocation = new Double[3];
                     for (int i = 0; i < 3; i++){
                         if (i==0)
@@ -158,7 +156,15 @@ public class Nodes extends DBConnection{
     }
 
     public static ObservableList getConnections(int graphId){
-        String selectConnections = "select * from (select c.CONNECTION_ID connection_id, c.NODE1_ID node1, n.city_id city1, cd.city_name city1_name, cd.GEO_HEIGHT height1, cd.GEO_WIDTH width1 from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node1_id inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node1 inner join (select c.CONNECTION_ID connection_id,c.NODE2_ID node2, n.city_id city2, cd.city_name city2_name, cd.GEO_HEIGHT height2, cd.GEO_WIDTH width2 from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node2_id inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node2 on node1.connection_id=node2.connection_id";
+        String selectConnections = "select * from (select c.CONNECTION_ID connection_id, c.NODE1_ID node1, " +
+                "n.city_id city1, cd.city_name city1_name, cd.GEO_HEIGHT height1, cd.GEO_WIDTH width1 " +
+                "from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node1_id " +
+                "inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node1 " +
+                "inner join (select c.CONNECTION_ID connection_id,c.NODE2_ID node2, n.city_id city2, " +
+                "cd.city_name city2_name, cd.GEO_HEIGHT height2, cd.GEO_WIDTH width2 from connection c " +
+                "inner join node n on n.graph_id=c.graph_id and n.node_id=c.node2_id " +
+                "inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? " +
+                "order by connection_id asc) node2 on node1.connection_id=node2.connection_id";
 
         PreparedStatement preparedStatement;
         ObservableList<Connections> connectionsObservableList = FXCollections.observableArrayList();
@@ -178,4 +184,33 @@ public class Nodes extends DBConnection{
 
         return connectionsObservableList;
     }
+
+
+    public static ObservableList getNodes(int graphId){
+        String selectNodes = "select k.*, n.city_id, c.city_name, c.geo_width, c.geo_height, dense_rank() over " +
+                "(order by k.amount desc) as ranking from (SELECT node_id, COUNT(node_id) as amount " +
+                "FROM (SELECT node1_id AS node_id FROM connection where graph_id = ? UNION ALL " +
+                "SELECT node2_id FROM connection where graph_id = ?) t WHERE node_id IS NOT NULL " +
+                "GROUP BY node_id ORDER BY amount desc) k inner join node n on k.node_id = n.node_id " +
+                "inner join city_data c on c.city_id=n.city_id";
+        PreparedStatement preparedStatement;
+        ObservableList<NodesConnections> nodesObservableList = FXCollections.observableArrayList();
+        try {
+            preparedStatement = connection.prepareStatement(selectNodes);
+            preparedStatement.setInt(1, graphId);
+            preparedStatement.setInt(2, graphId);
+            System.out.println(selectNodes);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                nodesObservableList.add(new NodesConnections(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4), resultSet.getDouble(5),resultSet.getDouble(6),resultSet.getInt(7)));
+            }
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+
+        return nodesObservableList;
+    }
+
+
 }
