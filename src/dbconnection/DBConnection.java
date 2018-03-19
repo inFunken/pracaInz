@@ -1,47 +1,39 @@
 package dbconnection;
 
 import gui.Popups;
-
+import java.io.IOException;
 import java.sql.*;
+import java.util.Properties;
 
 public class DBConnection {
     public static Connection connection = null;
 
     public static void connect() {
+        Properties properties = new Properties();
+
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
         }
         catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            Popups.genericError(e.getMessage());
         }
 
         try {
-            connection = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl", "ps", "12345");
+            properties.load(DBConnection.class.getClassLoader().getResourceAsStream("connection.properties"));
         }
-        catch (SQLException e) {
-            e.printStackTrace();
+        catch (IOException e) {
+            Popups.genericError(e.getMessage());
         }
-        System.out.println("connected to db");
-    }
-
-    public static void getCityData(){
-        String selectSQL = "SELECT count(*) FROM CITY_DATA";
-        PreparedStatement preparedStatement = null;
 
         try {
-            preparedStatement = connection.prepareStatement(selectSQL);
-            ResultSet rs = preparedStatement.executeQuery(selectSQL );
-            while (rs.next()) {
-                Integer count = rs.getInt("COUNT(*)");
-                System.out.println(count);
-            }
+            connection = DriverManager.getConnection("jdbc:oracle:thin:@"
+                            + properties.getProperty("database.host") + ":"
+                            + properties.getProperty("database.port") + ":"
+                            + properties.getProperty("database.sid"),
+                    properties.getProperty("database.user"), properties.getProperty("database.password"));
         }
         catch (SQLException e) {
-            Popups.genericError(e.toString());
+            Popups.genericError(e.getMessage());
         }
-
-
-
-
     }
 }
