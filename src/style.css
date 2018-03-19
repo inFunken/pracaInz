@@ -9,5 +9,16 @@
     -fx-padding: 12 30 12 30;
     -fx-text-fill: white;
     -fx-font-size: 20px;
-
+}
+.button:hover {
+    -fx-background-color:
+            #000000,
+            linear-gradient(#2f4b8f, #263e75),
+            linear-gradient(#263e75, #223768),
+            linear-gradient(#223768, #223768);
+}
+#canvas{
+    -fx-border-color: blue;
+    -fx-background-image: url("poland_border.jpg");
+    -fx-background-repeat: stretch;
 }
