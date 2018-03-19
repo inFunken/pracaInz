@@ -18,7 +18,7 @@ public class PannableCanvas extends Pane {
 
     public PannableCanvas() {
         setPrefSize(600, 600);
-        setStyle("-fx-background-color: lightgrey; -fx-border-color: blue;");
+        setStyle("-fx-background-color: white; -fx-border-color: blue;");
 
         // add scale transform
         scaleXProperty().bind(myScale);
@@ -41,7 +41,7 @@ public class PannableCanvas extends Pane {
 
         GraphicsContext gc = grid.getGraphicsContext2D();
 
-        gc.setStroke(Color.GRAY);
+        gc.setStroke(Color.WHITE);
         gc.setLineWidth(1);
 
         // draw grid lines
