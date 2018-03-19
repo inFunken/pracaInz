@@ -13,41 +13,41 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Nodes extends DBConnection{
 
-    public static void insertNewGraph(){
-        String insertNewGraph = "insert into graph values (seqGraph.nextval, sysdate, null)";
+    public static String selectGraphSeq = "select seqGraph.nextval from dual";
+    public static int graphSeq = 0;
+    public static String insertNewGraph = "insert into graph values (?, sysdate, null)";
+    public static String insertNewNode = "insert into node values (?, ?, ?)";
+    public static String insertNewConnection = "insert into connection values (?, ?, ?, ?)";
+
+    public static PreparedStatement createCursor(String query){
+        PreparedStatement preparedStatement = null;
         try {
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertNewGraph);
-            preparedStatement .executeUpdate();
+            preparedStatement = connection.prepareStatement(query);
         }
         catch (SQLException e) {
             Popups.genericError(e.toString());
         }
+        return preparedStatement;
     }
 
-    public static void insertNode(int nodeId, int cityId){
-        String insertNode = "insert into node values (?, seqGraph.currval, ?)";
+    public static void getGraphSeq(String query){
+        PreparedStatement preparedStatement = null;
         try {
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertNode);
-            preparedStatement.setInt(1, nodeId);
-            preparedStatement.setInt(2, cityId);
-            preparedStatement .executeUpdate();
+            preparedStatement = connection.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery(query );
+            while (resultSet.next()) {
+                graphSeq = resultSet.getInt(1);
+                System.out.println("GRAPH SEQ = " + graphSeq);
+            }
         }
-        catch (SQLException e) {
+        catch (SQLException e){
             Popups.genericError(e.toString());
         }
     }
 
-
-    public static void insertConnection(int connectionId, int node1, int node2){
-        String insertConnection = "insert into connection values (?, seqGraph.currval, ?, ?)";
+    public static void insertNewGraph(PreparedStatement preparedStatement){
         try {
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertConnection);
-            preparedStatement.setInt(1, connectionId);
-            preparedStatement.setInt(2, node1);
-            preparedStatement.setInt(3, node2);
+            preparedStatement.setInt(1, graphSeq);
             preparedStatement.executeUpdate();
         }
         catch (SQLException e) {
@@ -55,8 +55,44 @@ public class Nodes extends DBConnection{
         }
     }
 
+    public static void insertNode(PreparedStatement preparedStatement, int nodeId, int cityId){
+        try {
+            preparedStatement.setInt(1, nodeId);
+            preparedStatement.setInt(2, graphSeq);
+            preparedStatement.setInt(3, cityId);
+            preparedStatement.executeUpdate();
+
+        }
+        catch (SQLException e) {
+            System.out.println("inserted ffs " + nodeId + "\t" + cityId);
+            Popups.genericError(e.toString());
+        }
+    }
+
+
+    public static void insertConnection(PreparedStatement preparedStatement, int connectionId, int node1, int node2, boolean isExecutable){
+        try {
+            connection.setAutoCommit(false);
+            preparedStatement.setInt(1, connectionId);
+            preparedStatement.setInt(2, graphSeq);
+            preparedStatement.setInt(3, node1);
+            preparedStatement.setInt(4, node2);
+            preparedStatement.addBatch();
+
+            if (isExecutable) {
+                preparedStatement.executeBatch();
+                preparedStatement.clearBatch();
+            }
+
+            connection.commit();
+        }
+        catch (SQLException e) {
+            Popups.genericError(e.toString());
+        }
+    }
+
     public static void generateNodes(int amount){
-        String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM " +
+        String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM "+
                 "FROM CITY_DATA order by 1";
         PreparedStatement preparedStatement;
         ArrayList<String[]> cityData = new ArrayList<>();
@@ -80,11 +116,11 @@ public class Nodes extends DBConnection{
 
         int wholePopulation = Integer.parseInt(cityData.get(cityData.size()-1)[5]);
 
-        System.out.println(wholePopulation);
+        getGraphSeq(selectGraphSeq);
+        PreparedStatement psInsertNewGraph = createCursor(insertNewGraph);
+        insertNewGraph(psInsertNewGraph);
 
-        insertNewGraph();
-
-
+        PreparedStatement psInsertNewNode = createCursor(insertNewNode);
         while(generatedNodes.size() < amount) {
             int randomNum = ThreadLocalRandom.current().nextInt(1, wholePopulation + 1);
             for (String[] p : cityData) {
@@ -103,8 +139,7 @@ public class Nodes extends DBConnection{
                             cityLocation[i] = geoHeight;
                     }
                     generatedNodes.add(cityLocation);
-                    System.out.println("random: " + randomNum + " population rolling sum: " + populationRollingSum + " city id: " + cityId + " city name: " + cityName);
-                    insertNode(generatedNodes.size(), (int) cityId);
+                    insertNode(psInsertNewNode, generatedNodes.size(), (int) cityId);
                     break;
                 }
             }
@@ -124,12 +159,20 @@ public class Nodes extends DBConnection{
 
         double randomNum;
         int connectionId=1;
+        PreparedStatement psInsertNewConnection = createCursor(insertNewConnection);
         for (int i = 0; i < nodes.size(); i++) {
             for (int j = i + 1; j < nodes.size(); j++) {
                 randomNum = ThreadLocalRandom.current().nextDouble(0, 100 + 1);
                 if (randomNum <= probability) {
-                    System.out.println("Connection   " + i + "\t" + j);
-                    insertConnection(connectionId, i + 1, j + 1);
+                    if (connectionId % 4000 != 0) {
+                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, false);
+                    }
+                    else if (connectionId % 4000 == 0) {
+                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
+                    }
+                    else if (j == nodes.size() - 1){
+                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
+                    }
                     connectionId += 1;
                 }
             }
@@ -139,13 +182,13 @@ public class Nodes extends DBConnection{
     public static ObservableList getExistingGraphs(){
         String selectExistingGraphView = "select * from existingGraphView";
         PreparedStatement preparedStatement;
-        //List<Object> existingGraphs = new ArrayList<>();
         ObservableList<Graph> existingGraphsObservableList = FXCollections.observableArrayList();
         try {
             preparedStatement = connection.prepareStatement(selectExistingGraphView);
             ResultSet resultSet = preparedStatement.executeQuery(selectExistingGraphView );
             while (resultSet.next()) {
-                existingGraphsObservableList.add(new Graph(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getDate(4)));
+                existingGraphsObservableList.add(new Graph(resultSet.getInt(1),resultSet.getInt(2),
+                        resultSet.getInt(3),resultSet.getDate(4)));
                 }
         }
         catch (SQLException e) {
@@ -159,7 +202,7 @@ public class Nodes extends DBConnection{
         String selectConnections = "select * from (select c.CONNECTION_ID connection_id, c.NODE1_ID node1, " +
                 "n.city_id city1, cd.city_name city1_name, cd.GEO_HEIGHT height1, cd.GEO_WIDTH width1 " +
                 "from connection c inner join node n on n.graph_id=c.graph_id and n.node_id=c.node1_id " +
-                "inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node1 " +
+                "inner join city_data cd on cd.city_id=n.city_id where c.graph_id=? order by connection_id asc) node1 "+
                 "inner join (select c.CONNECTION_ID connection_id,c.NODE2_ID node2, n.city_id city2, " +
                 "cd.city_name city2_name, cd.GEO_HEIGHT height2, cd.GEO_WIDTH width2 from connection c " +
                 "inner join node n on n.graph_id=c.graph_id and n.node_id=c.node2_id " +
@@ -175,7 +218,12 @@ public class Nodes extends DBConnection{
             System.out.println(selectConnections);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                connectionsObservableList.add(new Connections(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4), resultSet.getDouble(5),resultSet.getDouble(6),resultSet.getInt(7),resultSet.getInt(8),resultSet.getInt(9),resultSet.getString(10), resultSet.getDouble(11),resultSet.getDouble(12)));
+                connectionsObservableList.add(new Connections(resultSet.getInt(1),
+                        resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4),
+                        resultSet.getDouble(5),resultSet.getDouble(6),
+                        resultSet.getInt(7),resultSet.getInt(8),resultSet.getInt(9),
+                        resultSet.getString(10), resultSet.getDouble(11),
+                        resultSet.getDouble(12)));
             }
         }
         catch (SQLException e) {
@@ -187,22 +235,29 @@ public class Nodes extends DBConnection{
 
 
     public static ObservableList getNodes(int graphId){
-        String selectNodes = "select k.*, n.city_id, c.city_name, c.geo_width, c.geo_height, dense_rank() over " +
-                "(order by k.amount desc) as ranking from (SELECT node_id, COUNT(node_id) as amount " +
-                "FROM (SELECT node1_id AS node_id FROM connection where graph_id = ? UNION ALL " +
-                "SELECT node2_id FROM connection where graph_id = ?) t WHERE node_id IS NOT NULL " +
-                "GROUP BY node_id ORDER BY amount desc) k inner join node n on k.node_id = n.node_id " +
-                "inner join city_data c on c.city_id=n.city_id";
+        String selectNodes = "select k.node_id, k.amount, n.city_id, cd.city_name, cd.geo_width, cd.geo_height, " +
+                "dense_rank() over (order by k.amount desc) as ranking " +
+                "from (SELECT graph_id, node_id, COUNT(node_id) as amount " +
+                "FROM (SELECT graph_id, node1_id AS node_id FROM connection where graph_id = ? " +
+                "UNION ALL SELECT graph_id, node2_id FROM connection where graph_id = ?) t " +
+                "WHERE node_id IS NOT NULL GROUP BY node_id, graph_id ORDER BY amount desc) k " +
+                "inner join (select * from node where graph_id=?) n on n.node_id = k.node_id " +
+                "inner join (select * from city_data) cd on n.city_id = cd.city_id\n";
         PreparedStatement preparedStatement;
         ObservableList<NodesConnections> nodesObservableList = FXCollections.observableArrayList();
+        System.out.println(graphId);
         try {
             preparedStatement = connection.prepareStatement(selectNodes);
             preparedStatement.setInt(1, graphId);
             preparedStatement.setInt(2, graphId);
+            preparedStatement.setInt(3, graphId);
             System.out.println(selectNodes);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                nodesObservableList.add(new NodesConnections(resultSet.getInt(1),resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4), resultSet.getDouble(5),resultSet.getDouble(6),resultSet.getInt(7)));
+                nodesObservableList.add(new NodesConnections(resultSet.getInt(1),
+                        resultSet.getInt(2),resultSet.getInt(3),resultSet.getString(4),
+                        resultSet.getDouble(5),resultSet.getDouble(6),
+                        resultSet.getInt(7)));
             }
         }
         catch (SQLException e) {
