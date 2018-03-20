@@ -113,7 +113,8 @@ public class Scenes {
 
         TextField txtfAmount = new TextField();
         txtfAmount.setMaxWidth(270);
-//        todo change that to lambda expression - learn about lambda
+        txtfAmount.setFont(new Font(20));
+
         txtfAmount.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -123,19 +124,50 @@ public class Scenes {
             }
         });
 
+        Label lblProbability = new Label();
+        lblProbability.setText("Probability of connection between nodes in %:");
+        lblProbability.setFont(new Font(20));
+
+        TextField txtfProbability = new TextField();
+        txtfProbability.setMaxWidth(270);
+        txtfProbability.setFont(new Font(20));
+
+        txtfProbability.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*")) {
+                    txtfProbability.setText(newValue.replaceAll("[^\\d]", ""));
+                }
+            }
+        });
+
         Button btnGenerateNewGraph = new Button();
         btnGenerateNewGraph.setPrefSize(270,30);
         btnGenerateNewGraph.setText("Generate graph");
         btnGenerateNewGraph.setOnAction((ActionEvent event) -> {
-            System.out.println("Generating graph " + txtfAmount.getText());
+            try {
+                Integer.parseInt(txtfAmount.getText());
+                Integer.parseInt(txtfProbability.getText());
+                if (Integer.parseInt(txtfAmount.getText()) == 0)
+                    throw new CustomException("Node amount must be greater than 0!");
+                if (Integer.parseInt(txtfProbability.getText()) > 100)
+                    throw new CustomException("Probability cannot be greater than 100%!");
+            }
+            catch(NumberFormatException e) {
+                Popups.genericError("Enter the correct values!");
+                return;
+            }
+            catch (CustomException e) {
+                Popups.genericError(e.getMessage());
+                return;
+            }
+
             Nodes.generateNodes(Integer.parseInt(txtfAmount.getText()));
             stage.setScene(startingScene(stage));
+
         });
 
-        Circle circeTest = new Circle(21.02,52.12, 1);
-
-        newGraphMenu.getChildren().addAll(btnBack, lblAmount, txtfAmount, btnGenerateNewGraph, circeTest);
-        //newGraphMenu.getChildren().addAll(circeTest2);
+        newGraphMenu.getChildren().addAll(btnBack, lblAmount, txtfAmount, lblProbability, txtfProbability, btnGenerateNewGraph);
         newGraphMenu.setAlignment(Pos.TOP_LEFT);
         newGraphMenu.setPadding(new Insets(30, 30, 30, 30));
         newGraphMenu.setSpacing(20);
@@ -376,7 +408,10 @@ public class Scenes {
         }
 
         System.out.println("Amount of ranks: " + amountOfRanks);
-        deltaRadius = 290 / (amountOfRanks - 1);
+        if (amountOfRanks > 1)
+            deltaRadius = 290 / (amountOfRanks - 1);
+        else
+            deltaRadius = 290 / 2;
 
         while (i < circles.length) {
             Circle circle = new Circle();
