@@ -127,7 +127,6 @@ public class Nodes extends DBConnection{
                 int populationRollingSum = Integer.parseInt(p[p.length-1]);
                 double cityId = Integer.parseInt(p[0]);
                 double geoWidth = Double.parseDouble(p[2]), geoHeight = Double.parseDouble(p[3]);
-                String cityName = p[1];
                 if (randomNum <= populationRollingSum) {
                     Double[] cityLocation = new Double[3];
                     for (int i = 0; i < 3; i++){
@@ -151,7 +150,7 @@ public class Nodes extends DBConnection{
             System.out.println();
         }
 
-        generateConnections(50, generatedNodes);
+        generateConnections(30, generatedNodes);
 
     }
 
@@ -162,16 +161,13 @@ public class Nodes extends DBConnection{
         PreparedStatement psInsertNewConnection = createCursor(insertNewConnection);
         for (int i = 0; i < nodes.size(); i++) {
             for (int j = i + 1; j < nodes.size(); j++) {
-                randomNum = ThreadLocalRandom.current().nextDouble(0, 100 + 1);
+                randomNum = ThreadLocalRandom.current().nextDouble(0, 100);
                 if (randomNum <= probability) {
-                    if (connectionId % 4000 != 0) {
+                    if (j == (nodes.size() - 1) || connectionId % 4000 == 0){
+                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
+                    }
+                    else if (connectionId % 4000 != 0) {
                         insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, false);
-                    }
-                    else if (connectionId % 4000 == 0) {
-                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
-                    }
-                    else if (j == nodes.size() - 1){
-                        insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
                     }
                     connectionId += 1;
                 }
