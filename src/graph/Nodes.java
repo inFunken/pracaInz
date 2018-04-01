@@ -37,7 +37,6 @@ public class Nodes extends DBConnection{
             ResultSet resultSet = preparedStatement.executeQuery(query );
             while (resultSet.next()) {
                 graphSeq = resultSet.getInt(1);
-                System.out.println("GRAPH SEQ = " + graphSeq);
             }
         }
         catch (SQLException e){
@@ -64,7 +63,6 @@ public class Nodes extends DBConnection{
 
         }
         catch (SQLException e) {
-            System.out.println("inserted ffs " + nodeId + "\t" + cityId);
             Popups.genericError(e.toString());
         }
     }
@@ -91,7 +89,7 @@ public class Nodes extends DBConnection{
         }
     }
 
-    public static void generateNodes(int amount){
+    public static int generateNodes(int amount, int probability){
         String selectCityData = "SELECT CITY_ID, CITY_NAME, GEO_WIDTH, GEO_HEIGHT, POPULATION, POPULATION_ROLLING_SUM "+
                 "FROM CITY_DATA order by 1";
         PreparedStatement preparedStatement;
@@ -143,15 +141,9 @@ public class Nodes extends DBConnection{
                 }
             }
         }
-        for(Double[] cityList: generatedNodes) {
-            for(double cityProperties: cityList) {
-                System.out.print(cityProperties + "\t");
-            }
-            System.out.println();
-        }
+        generateConnections(probability, generatedNodes);
 
-        generateConnections(30, generatedNodes);
-
+        return graphSeq;
     }
 
     public static void generateConnections(double probability, List<Double[]> nodes){
@@ -163,7 +155,7 @@ public class Nodes extends DBConnection{
             for (int j = i + 1; j < nodes.size(); j++) {
                 randomNum = ThreadLocalRandom.current().nextDouble(0, 100);
                 if (randomNum <= probability) {
-                    if (j == (nodes.size() - 1) || connectionId % 4000 == 0){
+                    if (i >= (nodes.size() - 50) || connectionId % 4000 == 0){
                         insertConnection(psInsertNewConnection, connectionId, i + 1, j + 1, true);
                     }
                     else if (connectionId % 4000 != 0) {
@@ -211,7 +203,6 @@ public class Nodes extends DBConnection{
             preparedStatement = connection.prepareStatement(selectConnections);
             preparedStatement.setInt(1, graphId);
             preparedStatement.setInt(2, graphId);
-            System.out.println(selectConnections);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 connectionsObservableList.add(new Connections(resultSet.getInt(1),
@@ -225,7 +216,6 @@ public class Nodes extends DBConnection{
         catch (SQLException e) {
             Popups.genericError(e.toString());
         }
-
         return connectionsObservableList;
     }
 
@@ -238,16 +228,14 @@ public class Nodes extends DBConnection{
                 "UNION ALL SELECT graph_id, node2_id FROM connection where graph_id = ?) t " +
                 "WHERE node_id IS NOT NULL GROUP BY node_id, graph_id ORDER BY amount desc) k " +
                 "inner join (select * from node where graph_id=?) n on n.node_id = k.node_id " +
-                "inner join (select * from city_data) cd on n.city_id = cd.city_id\n";
+                "inner join (select * from city_data) cd on n.city_id = cd.city_id";
         PreparedStatement preparedStatement;
         ObservableList<NodesConnections> nodesObservableList = FXCollections.observableArrayList();
-        System.out.println(graphId);
         try {
             preparedStatement = connection.prepareStatement(selectNodes);
             preparedStatement.setInt(1, graphId);
             preparedStatement.setInt(2, graphId);
             preparedStatement.setInt(3, graphId);
-            System.out.println(selectNodes);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 nodesObservableList.add(new NodesConnections(resultSet.getInt(1),
