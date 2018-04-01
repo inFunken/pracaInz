@@ -19,6 +19,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
@@ -33,6 +35,7 @@ import zoomAndDrag.PannableCanvas;
 import zoomAndDrag.SceneGestures;
 import zoomAndDrag.NodesOnCircles;
 
+import java.io.File;
 
 public class Scenes {
 
@@ -42,13 +45,22 @@ public class Scenes {
         StackPane stackPane = new StackPane();
         Scene startingScene = new Scene(stackPane, 1280, 720);
         startingScene.getStylesheets().add("style.css");
+
+        File fileLogo = new File("logo.png");
+        Image imageLogo = new Image(fileLogo.toString());
+        ImageView ivLogo = new ImageView(imageLogo);
+
+        VBox logo = new VBox();
+        logo.getChildren().addAll(ivLogo);
+        logo.setAlignment(Pos.TOP_RIGHT);
+        logo.setPadding(new Insets(30, 30, 30, 30));
+
         VBox mainMenu = new VBox();
 
         Button btnNewGraph = new Button();
         btnNewGraph.setPrefSize(270,30);
         btnNewGraph.setText("Generate new graph");
         btnNewGraph.setOnAction((ActionEvent event) -> {
-            System.out.println("Generate new graph");
             stage.setScene(newGraphScene(stage));
         });
 
@@ -56,7 +68,6 @@ public class Scenes {
         btnChooseExistingGraph.setPrefSize(270,30);
         btnChooseExistingGraph.setText("Choose existing graph");
         btnChooseExistingGraph.setOnAction((ActionEvent event) -> {
-            System.out.println("Choose existing graph");
             stage.setScene(exisitingGraphScene(stage));
         });
 
@@ -64,19 +75,14 @@ public class Scenes {
         btnHelp.setPrefSize(270,30);
         btnHelp.setText("Help");
         btnHelp.setOnAction((ActionEvent event) -> {
-            System.out.println("Help");
-            Nodes.generateNodes(2);
-
-            stage.setScene(newGraphScene(stage));
+            stage.setScene(helpScene(stage));
         });
 
         Button btnAboutAuthor = new Button();
         btnAboutAuthor.setPrefSize(270,30);
         btnAboutAuthor.setText("About author");
         btnAboutAuthor.setOnAction((ActionEvent event) -> {
-            System.out.println("Info about author");
-            Nodes.generateNodes(2);
-            stage.setScene(newGraphScene(stage));
+            stage.setScene(authorScene(stage));
         });
 
         Button btnExit = new Button();
@@ -87,8 +93,8 @@ public class Scenes {
         mainMenu.getChildren().addAll(btnNewGraph, btnChooseExistingGraph, btnHelp, btnAboutAuthor, btnExit);
         mainMenu.setAlignment(Pos.TOP_LEFT);
         mainMenu.setPadding(new Insets(30, 30, 30, 30));
-        mainMenu.setSpacing(20);
-        stackPane.getChildren().add(mainMenu);
+        mainMenu.setSpacing(30);
+        stackPane.getChildren().addAll(logo, mainMenu);
         return startingScene;
     }
 
@@ -103,7 +109,6 @@ public class Scenes {
         btnBack.setPrefSize(270,30);
         btnBack.setText("Back");
         btnBack.setOnAction((ActionEvent event) -> {
-            System.out.println("Back");
             stage.setScene(startingScene(stage));
         });
 
@@ -162,9 +167,8 @@ public class Scenes {
                 return;
             }
 
-            Nodes.generateNodes(Integer.parseInt(txtfAmount.getText()));
-            stage.setScene(startingScene(stage));
-
+            int graphSeq = Nodes.generateNodes(Integer.parseInt(txtfAmount.getText()), Integer.parseInt(txtfProbability.getText()));
+            stage.setScene(graphSceneTable(stage, graphSeq));
         });
 
         newGraphMenu.getChildren().addAll(btnBack, lblAmount, txtfAmount, lblProbability, txtfProbability, btnGenerateNewGraph);
@@ -174,6 +178,83 @@ public class Scenes {
         stackPane.getChildren().add(newGraphMenu);
         return newGraphScene;
     }
+
+    public javafx.scene.Scene helpScene(Stage stage){
+        StackPane stackPane = new StackPane();
+        Scene helpScene = new Scene(stackPane, 1280, 720);
+        helpScene.getStylesheets().add("style.css");
+
+        VBox helpContent = new VBox();
+
+        Button btnBack = new Button();
+        btnBack.setPrefSize(270,30);
+        btnBack.setText("Back");
+        btnBack.setOnAction((ActionEvent event) -> {
+            stage.setScene(startingScene(stage));
+        });
+
+        Label lblHelpHeader = new Label();
+        lblHelpHeader.setText("Help");
+        lblHelpHeader.setFont(new Font(30));
+
+        Label lblHelp = new Label();
+        lblHelp.setText("This help covers basic aspects of this application and will provide necessary information to get started.\n\n" +
+                "If you want to generate your own graph, choose \"Generate new graph\" option in main menu.\n" +
+                "You will be asked to insert the number of nodes as well as probability of connection between them.\n\n" +
+                "If you want to use already created graph, head to \"Choose existing graph\" option in main menu.\n" +
+                "Then select the graph from the list.\n\n" +
+                "After creating or selecting graph, you will see a full list of connections between nodes.\n" +
+                "You can go through the list using arrow keys, or PgUp PgDown.\n\n" +
+                "When you click on nodes on \"Nodes on circles\" button, you will see all the nodes presented on circles.\n" +
+                "In the center there will be nodes with the highest amount of connections, on the outer circles, with the lowest.\n" +
+                "You can zoom in using mouse wheel and drag the scene using right mouse button.\n" +
+                "After clicking on the node, you will see its NODE_ID and the name of city.\n\n" +
+                "To view nodes on map, click on \"Nodes on map\" button.\n" +
+                "You wil see all the nodes and connections presented on map of Poland.\n" +
+                "You can zoom in and move around using mouse wheel and mouse right button.\n" +
+                "Click on the node to see its information.");
+        lblHelp.setFont(new Font(15));
+
+        helpContent.getChildren().addAll(btnBack, lblHelpHeader, lblHelp);
+        helpContent.setAlignment(Pos.TOP_LEFT);
+        helpContent.setPadding(new Insets(30, 30, 30, 30));
+        helpContent.setSpacing(20);
+        stackPane.getChildren().add(helpContent);
+        return helpScene;
+    }
+
+    public javafx.scene.Scene authorScene(Stage stage){
+        StackPane stackPane = new StackPane();
+        Scene authorScene = new Scene(stackPane, 1280, 720);
+        authorScene.getStylesheets().add("style.css");
+
+        VBox authorContent = new VBox();
+
+        Button btnBack = new Button();
+        btnBack.setPrefSize(270,30);
+        btnBack.setText("Back");
+        btnBack.setOnAction((ActionEvent event) -> {
+            stage.setScene(startingScene(stage));
+        });
+
+        Label lblAuthorHeader = new Label();
+        lblAuthorHeader.setText("About author");
+        lblAuthorHeader.setFont(new Font(30));
+
+        Label lblAuthor = new Label();
+        lblAuthor.setText("Hi, my name is Piotr Skrodzki and I am the author of this application.\n" +
+                "It was created as my Engineer's Thesis in 2017/2018.\n" +
+                "The full name of this #todo");
+        lblAuthor.setFont(new Font(20));
+
+        authorContent.getChildren().addAll(btnBack, lblAuthorHeader, lblAuthor);
+        authorContent.setAlignment(Pos.TOP_LEFT);
+        authorContent.setPadding(new Insets(30, 30, 30, 30));
+        authorContent.setSpacing(20);
+        stackPane.getChildren().add(authorContent);
+        return authorScene;
+    }
+
 
     public javafx.scene.Scene graphSceneTable(Stage stage, int graphId){
         StackPane stackPane = new StackPane();
@@ -187,7 +268,6 @@ public class Scenes {
         btnBack.setPrefSize(270,30);
         btnBack.setText("Back");
         btnBack.setOnAction((ActionEvent event) -> {
-            System.out.println("Back");
             stage.setScene(startingScene(stage));
         });
 
@@ -195,7 +275,6 @@ public class Scenes {
         btnConnectionsList.setPrefSize(270,30);
         btnConnectionsList.setText("Connections list");
         btnConnectionsList.setOnAction((ActionEvent event) -> {
-            System.out.println("Connections list");
             stage.setScene(graphSceneTable(stage, graphId));
         });
 
@@ -203,7 +282,6 @@ public class Scenes {
         btnNodesOnCircles.setPrefSize(270,30);
         btnNodesOnCircles.setText("Nodes on circles");
         btnNodesOnCircles.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on circles");
             stage.setScene(onCirclesGraphScene(stage, graphId));
         });
 
@@ -211,7 +289,6 @@ public class Scenes {
         btnNodesOnMap.setPrefSize(270,30);
         btnNodesOnMap.setText("Nodes on map");
         btnNodesOnMap.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on map");
             stage.setScene(onMapGraphScene(stage, graphId));
         });
 
@@ -224,7 +301,6 @@ public class Scenes {
         TableColumn<Connections, Integer> connectionIdColumn = new TableColumn<>("Connection ID");
         connectionIdColumn.setMinWidth(50);
         connectionIdColumn.setCellValueFactory(new PropertyValueFactory<>("connectionId"));
-
 
         TableColumn<Connections, Integer> nodeId1Column = new TableColumn<>("Node1 ID");
         nodeId1Column.setMinWidth(50);
@@ -246,7 +322,6 @@ public class Scenes {
         cityWidth1Column.setMinWidth(50);
         cityWidth1Column.setCellValueFactory(new PropertyValueFactory<>("width1"));
 
-
         TableColumn<Connections, Integer> nodeId2Column = new TableColumn<>("Node2 ID");
         nodeId2Column.setMinWidth(50);
         nodeId2Column.setCellValueFactory(new PropertyValueFactory<>("nodeId2"));
@@ -267,12 +342,9 @@ public class Scenes {
         cityWidth2Column.setMinWidth(50);
         cityWidth2Column.setCellValueFactory(new PropertyValueFactory<>("width2"));
 
-
         TableView<Connections> tableExistingGraph = new TableView();
         tableExistingGraph.getColumns().addAll(connectionIdColumn, nodeId1Column, cityId1Column, cityName1Column, cityHeight1Column, cityWidth1Column, nodeId2Column, cityId2Column, cityName2Column, cityHeight2Column, cityWidth2Column);
         tableExistingGraph.setItems(connectionList);
-        //tableExistingGraph.setMaxWidth(350);
-
 
         int amountOfRecords = tableExistingGraph.getItems().size();
         nodesConnections = new Object[amountOfRecords][2];
@@ -296,6 +368,7 @@ public class Scenes {
         table.setSpacing(20);
 
         stackPane.getChildren().addAll(table, graphMenu);
+
         return graphSceneTable;
     }
 
@@ -310,7 +383,6 @@ public class Scenes {
         btnBack.setPrefSize(270,30);
         btnBack.setText("Back");
         btnBack.setOnAction((ActionEvent event) -> {
-            System.out.println("Back");
             stage.setScene(startingScene(stage));
         });
 
@@ -347,7 +419,6 @@ public class Scenes {
         btnLoadGraph.setOnAction((ActionEvent event) -> {
             try {
                 Graph selectedGraph = tableExistingGraph.getSelectionModel().getSelectedItem();
-                System.out.println("Selected Graph" + selectedGraph.getGraphId());
                 stage.setScene(graphSceneTable(stage, selectedGraph.getGraphId()));
             }
             catch (NullPointerException e) {
@@ -356,7 +427,6 @@ public class Scenes {
         });
 
         existingGraphMenu.getChildren().addAll(btnBack, lblList, tableExistingGraph, btnLoadGraph);
-        //newGraphMenu.getChildren().addAll(circeTest2);
         existingGraphMenu.setAlignment(Pos.TOP_LEFT);
         existingGraphMenu.setPadding(new Insets(30, 30, 30, 30));
         existingGraphMenu.setSpacing(20);
@@ -368,7 +438,7 @@ public class Scenes {
 
 
 
-
+    public static Label selectedNodeOnCircles = new Label();
 
     public static Group generateNodes(Object[][] xy){
         Group group1 = new Group();
@@ -376,22 +446,24 @@ public class Scenes {
         double x = 300;
         double radius = 0;
         double deltaRadius;
-        int amountOfRanks =(int) xy[xy.length - 1][6];
-        int currentRank = 0;
-        int ranks = 0;
+        int amountOfRanks;
+        int currentRank;
+        int ranks;
         int rest = 0;
         int n = 0;
         int nodeId = 0;
 
+        if (xy.length >= 1)
+            amountOfRanks =(int) xy[xy.length - 1][6];
+        else
+            amountOfRanks = 1;
+
         if (amountOfRanks > 10) {
             ranks = (amountOfRanks / 10);
-            System.out.println(ranks);
             rest = amountOfRanks % 10;
-            System.out.println(rest);
             amountOfRanks = 10;
         }
 
-        //initialize and populate the array with circles and nodes info
         int[][] circles = new int[amountOfRanks][2];
         for (int j = 0; j < amountOfRanks; j++) {
             if (j < amountOfRanks - rest) {
@@ -407,7 +479,6 @@ public class Scenes {
             }
         }
 
-        System.out.println("Amount of ranks: " + amountOfRanks);
         if (amountOfRanks > 1)
             deltaRadius = 290 / (amountOfRanks - 1);
         else
@@ -425,7 +496,6 @@ public class Scenes {
             while (currentRank >= range1 && currentRank <= range2 && nodeId < xy.length - 1) {
                 if (nodeId == 0 || currentRank != (int)xy[nodeId - 1][6]) {
                     if (currentRank == range1 && currentRank > circles[0][1]) {
-                        System.out.println(currentRank);
                         radius += deltaRadius;
                         circleRange = new Circle(x,x,radius);
                         circleRange.setFill(null);
@@ -435,25 +505,27 @@ public class Scenes {
                     }
 
                     NodesOnCircles node = NodesOnCircles.generateRandomNodes(300,300, radius);
-                    circle = new Circle(node.getX(),node.getY(),2);
-                    circle.setId(Integer.toString((int) xy[nodeId][0]));
+                    circle = new Circle(node.getX(), node.getY(),2);
+                    circle.setId(Integer.toString((int) xy[nodeId][0]) + "\t" + xy[nodeId][3]);
 
                     group1.getChildren().addAll(circle);
                     Circle finalCircle = circle;
                     circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
                         finalCircle.setFill(Color.RED);
-                        System.out.println(finalCircle.getId());
+                        selectedNodeOnCircles.setVisible(true);
+                        selectedNodeOnCircles.setText("Selected node: " + finalCircle.getId());
                     });
                 }
                 else {
                     NodesOnCircles node = NodesOnCircles.generateRandomNodes(300,300, radius);
-                    circle = new Circle(node.getX(),node.getY(),2);
-                    circle.setId(Integer.toString((int) xy[nodeId][0]));
+                    circle = new Circle(node.getX(), node.getY(),2);
+                    circle.setId(Integer.toString((int) xy[nodeId][0]) + "\t" + xy[nodeId][3]);
                     group1.getChildren().addAll(circle);
                     Circle finalCircle = circle;
                     circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
                         finalCircle.setFill(Color.RED);
-                        System.out.println(finalCircle.getId());
+                        selectedNodeOnCircles.setVisible(true);
+                        selectedNodeOnCircles.setText("Selected node: " + finalCircle.getId());
                     });
                 }
                 nodeId++;
@@ -485,6 +557,7 @@ public class Scenes {
         recordNumber++;
     }
 
+
     public javafx.scene.Scene onCirclesGraphScene(Stage stage, int graphId){
         StackPane stackPane = new StackPane();
         Scene nodesOnCircles = new Scene(stackPane, 1280, 720);
@@ -497,7 +570,6 @@ public class Scenes {
         btnBack.setPrefSize(270,30);
         btnBack.setText("Back");
         btnBack.setOnAction((ActionEvent event) -> {
-            System.out.println("Back");
             stage.setScene(startingScene(stage));
         });
 
@@ -505,7 +577,6 @@ public class Scenes {
         btnConnectionsList.setPrefSize(270,30);
         btnConnectionsList.setText("Connections list");
         btnConnectionsList.setOnAction((ActionEvent event) -> {
-            System.out.println("Connections list");
             stage.setScene(graphSceneTable(stage, graphId));
         });
 
@@ -513,7 +584,6 @@ public class Scenes {
         btnNodesOnCircles.setPrefSize(270,30);
         btnNodesOnCircles.setText("Nodes on circles");
         btnNodesOnCircles.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on circles");
             stage.setScene(onCirclesGraphScene(stage, graphId));
         });
 
@@ -521,7 +591,6 @@ public class Scenes {
         btnNodesOnMap.setPrefSize(270,30);
         btnNodesOnMap.setText("Nodes on map");
         btnNodesOnMap.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on map");
             stage.setScene(onMapGraphScene(stage, graphId));
         });
 
@@ -580,6 +649,9 @@ public class Scenes {
                 )
         );
         recordNumber = 0;
+        
+        selectedNodeOnCircles.setFont(new Font(20));
+        selectedNodeOnCircles.setVisible(false);
 
 
         Group group = new Group();
@@ -600,7 +672,7 @@ public class Scenes {
         graphMenu.setPadding(new Insets(30, 30, 30, 30));
         graphMenu.setSpacing(20);
 
-        table.getChildren().addAll(tableNodesConnections);
+        table.getChildren().addAll(tableNodesConnections, selectedNodeOnCircles);
         table.setAlignment(Pos.CENTER_LEFT);
         table.setPadding(new Insets(100, 30, 30, 30));
         table.setSpacing(20);
@@ -610,6 +682,7 @@ public class Scenes {
     }
 
 
+    public static Label selectedNodeOnMap = new Label();
 
     public javafx.scene.Scene onMapGraphScene(Stage stage, int graphId){
         StackPane stackPane = new StackPane();
@@ -623,7 +696,6 @@ public class Scenes {
         btnBack.setPrefSize(270,30);
         btnBack.setText("Back");
         btnBack.setOnAction((ActionEvent event) -> {
-            System.out.println("Back");
             stage.setScene(startingScene(stage));
         });
 
@@ -631,7 +703,6 @@ public class Scenes {
         btnConnectionsList.setPrefSize(270,30);
         btnConnectionsList.setText("Connections list");
         btnConnectionsList.setOnAction((ActionEvent event) -> {
-            System.out.println("Connections list");
             stage.setScene(graphSceneTable(stage, graphId));
         });
 
@@ -639,7 +710,6 @@ public class Scenes {
         btnNodesOnCircles.setPrefSize(270,30);
         btnNodesOnCircles.setText("Nodes on circles");
         btnNodesOnCircles.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on circles");
             stage.setScene(onCirclesGraphScene(stage, graphId));
         });
 
@@ -647,7 +717,6 @@ public class Scenes {
         btnNodesOnMap.setPrefSize(270,30);
         btnNodesOnMap.setText("Nodes on map");
         btnNodesOnMap.setOnAction((ActionEvent event) -> {
-            System.out.println("Nodes on map");
             stage.setScene(onMapGraphScene(stage, graphId));
         });
 
@@ -719,6 +788,7 @@ public class Scenes {
         subScene.setTranslateX(400);
         subScene.setTranslateY(50);
         SceneGestures sceneGestures = new SceneGestures(canvas);
+        subScene.setPickOnBounds(true);
         subScene.addEventFilter( MouseEvent.MOUSE_PRESSED, sceneGestures.getOnMousePressedEventHandler());
         subScene.addEventFilter( MouseEvent.MOUSE_DRAGGED, sceneGestures.getOnMouseDraggedEventHandler());
         subScene.addEventFilter( ScrollEvent.ANY, sceneGestures.getOnScrollEventHandler());
@@ -728,7 +798,11 @@ public class Scenes {
         graphMenu.setPadding(new Insets(30, 30, 30, 30));
         graphMenu.setSpacing(20);
 
-        table.getChildren().addAll(tableNodesConnections);
+
+        selectedNodeOnMap.setFont(new Font(20));
+        selectedNodeOnMap.setVisible(false);
+
+        table.getChildren().addAll(tableNodesConnections, selectedNodeOnMap);
         table.setAlignment(Pos.CENTER_LEFT);
         table.setPadding(new Insets(100, 30, 30, 30));
         table.setSpacing(20);
