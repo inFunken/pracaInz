@@ -1,8 +1,5 @@
 package graph;
 
-/**
- * Created by Piotr on 09.01.2018.
- */
 public class Connections {
 
     int connectionId;
@@ -19,7 +16,10 @@ public class Connections {
     double height2;
     double width2;
 
-    public Connections(int connectionId, int nodeId1, int cityId1, String cityName1, double height1, double width1, int connectionId1, int nodeId2, int cityId2, String cityName2, double height2, double width2) {
+
+
+    public Connections(int connectionId, int nodeId1, int cityId1, String cityName1, double height1, double width1,
+                       int connectionId1, int nodeId2, int cityId2, String cityName2, double height2, double width2) {
         this.connectionId = connectionId;
         this.nodeId1 = nodeId1;
         this.cityId1 = cityId1;
