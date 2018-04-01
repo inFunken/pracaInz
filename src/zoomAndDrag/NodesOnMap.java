@@ -5,15 +5,18 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
+import gui.Scenes;
+import javafx.scene.control.Label;
 
-/**
- * Created by Piotr on 01.03.2018.
- */
 public class NodesOnMap {
+
+    private static Scenes labelWithSelectedNode;
+
+    public static Label getLabel() {
+        return labelWithSelectedNode.selectedNodeOnMap;
+    }
 
     public static Group generateNodesOnMap(Object[][] nodes, Object[][] connections) {
 
@@ -53,29 +56,20 @@ public class NodesOnMap {
 
             Circle circle = new Circle(width, height, 1);
 
-            circle.setId(Integer.toString(data[i][0].intValue()));
+            circle.setId(Integer.toString(data[i][0].intValue()) + "\t" + nodes[i][3]);
             circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
                 circle.setFill(Color.RED);
-                System.out.println(circle.getId());
+                final Label selectedNodeOnMap = getLabel();
+                selectedNodeOnMap.setVisible(true);
+                selectedNodeOnMap.setText("Selected node: " + circle.getId());
             });
 
             groupNodes.getChildren().addAll(circle);
             i++;
         }
 
-//        Arrays.sort(data, new Comparator<double[]>() {
-//            @Override
-//            public int compare(double[] o1, double[] o2) {
-//                Double nodeId1 = o1[0];
-//                Double nodeId2 = o2[0];
-//                return nodeId1.compareTo(nodeId2);
-//            }
-//        });
-
         Arrays.sort(data, (Double[] o1, Double[] o2) -> o1[0].compareTo(o2[0]));
 
-        //Some comparators like (person1, person2) -> person1.getName().compareTo(person2.getName())
-        // could be simplified like this: Comparator.comparing(Person::getName)
         i = 0;
 
         while(connections.length > i){
