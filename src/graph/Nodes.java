@@ -221,14 +221,19 @@ public class Nodes extends DBConnection{
 
 
     public static ObservableList getNodes(int graphId){
-        String selectNodes = "select k.node_id, k.amount, n.city_id, cd.city_name, cd.geo_width, cd.geo_height, " +
-                "dense_rank() over (order by k.amount desc) as ranking " +
-                "from (SELECT graph_id, node_id, COUNT(node_id) as amount " +
-                "FROM (SELECT graph_id, node1_id AS node_id FROM connection where graph_id = ? " +
-                "UNION ALL SELECT graph_id, node2_id FROM connection where graph_id = ?) t " +
-                "WHERE node_id IS NOT NULL GROUP BY node_id, graph_id ORDER BY amount desc) k " +
-                "inner join (select * from node where graph_id=?) n on n.node_id = k.node_id " +
-                "inner join (select * from city_data) cd on n.city_id = cd.city_id";
+        String selectNodes = "select node_id, amount, city_idd city_id, city_name, geo_width, geo_height, dense_rank() over (order by amount desc) as ranking from \n" +
+                "(select all_nodes.node_id, nvl(with_conn.amount,0) amount, all_nodes.city_idd, all_nodes.city_name, all_nodes.geo_width, all_nodes.geo_height from\n" +
+                "(select * from (select node_id, city_id city_idd from node where graph_id = ?) nd inner join (select city_id, city_name, geo_height, geo_width from city_data) cd on nd.city_idd = cd.city_id order by 1 asc) all_nodes\n" +
+                "full outer join\n" +
+                "(select k.node_id, k.amount, n.city_id, cd.city_name, cd.geo_width, cd.geo_height,  \n" +
+                "                dense_rank() over (order by k.amount desc) as ranking  \n" +
+                "                from (SELECT graph_id, node_id, COUNT(node_id) as amount  \n" +
+                "                FROM (SELECT graph_id, node1_id AS node_id FROM connection where graph_id = ?  \n" +
+                "                UNION ALL SELECT graph_id, node2_id FROM connection where graph_id = ?) t  \n" +
+                "                WHERE node_id IS NOT NULL GROUP BY node_id, graph_id ORDER BY amount desc) k  \n" +
+                "                inner join (select * from node where graph_id=?) n on n.node_id = k.node_id  \n" +
+                "                inner join (select * from city_data) cd on n.city_id = cd.city_id order by 1 asc) with_conn\n" +
+                "on with_conn.node_id = all_nodes.node_id order by 1 asc)";
         PreparedStatement preparedStatement;
         ObservableList<NodesConnections> nodesObservableList = FXCollections.observableArrayList();
         try {
@@ -236,6 +241,7 @@ public class Nodes extends DBConnection{
             preparedStatement.setInt(1, graphId);
             preparedStatement.setInt(2, graphId);
             preparedStatement.setInt(3, graphId);
+            preparedStatement.setInt(4, graphId);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 nodesObservableList.add(new NodesConnections(resultSet.getInt(1),
