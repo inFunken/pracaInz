@@ -78,19 +78,12 @@ public class Scenes {
             stage.setScene(helpScene(stage));
         });
 
-        Button btnAboutAuthor = new Button();
-        btnAboutAuthor.setPrefSize(270,30);
-        btnAboutAuthor.setText("About author");
-        btnAboutAuthor.setOnAction((ActionEvent event) -> {
-            stage.setScene(authorScene(stage));
-        });
-
         Button btnExit = new Button();
         btnExit.setPrefSize(270,30);
         btnExit.setText("Exit");
         btnExit.setOnAction(e -> Platform.exit());
 
-        mainMenu.getChildren().addAll(btnNewGraph, btnChooseExistingGraph, btnHelp, btnAboutAuthor, btnExit);
+        mainMenu.getChildren().addAll(btnNewGraph, btnChooseExistingGraph, btnHelp, btnExit);
         mainMenu.setAlignment(Pos.TOP_LEFT);
         mainMenu.setPadding(new Insets(30, 30, 30, 30));
         mainMenu.setSpacing(30);
@@ -222,39 +215,6 @@ public class Scenes {
         stackPane.getChildren().add(helpContent);
         return helpScene;
     }
-
-    public javafx.scene.Scene authorScene(Stage stage){
-        StackPane stackPane = new StackPane();
-        Scene authorScene = new Scene(stackPane, 1280, 720);
-        authorScene.getStylesheets().add("style.css");
-
-        VBox authorContent = new VBox();
-
-        Button btnBack = new Button();
-        btnBack.setPrefSize(270,30);
-        btnBack.setText("Back");
-        btnBack.setOnAction((ActionEvent event) -> {
-            stage.setScene(startingScene(stage));
-        });
-
-        Label lblAuthorHeader = new Label();
-        lblAuthorHeader.setText("About author");
-        lblAuthorHeader.setFont(new Font(30));
-
-        Label lblAuthor = new Label();
-        lblAuthor.setText("Hi, my name is Piotr Skrodzki and I am the author of this application.\n" +
-                "It was created as my Engineer's Thesis in 2017/2018.\n" +
-                "The full name of this #todo");
-        lblAuthor.setFont(new Font(20));
-
-        authorContent.getChildren().addAll(btnBack, lblAuthorHeader, lblAuthor);
-        authorContent.setAlignment(Pos.TOP_LEFT);
-        authorContent.setPadding(new Insets(30, 30, 30, 30));
-        authorContent.setSpacing(20);
-        stackPane.getChildren().add(authorContent);
-        return authorScene;
-    }
-
 
     public javafx.scene.Scene graphSceneTable(Stage stage, int graphId){
         StackPane stackPane = new StackPane();
@@ -441,99 +401,78 @@ public class Scenes {
     public static Label selectedNodeOnCircles = new Label();
 
     public static Group generateNodes(Object[][] xy){
-        Group group1 = new Group();
+        Group groupCirclesAndNodes = new Group();
         int i = 0;
         double x = 300;
         double radius = 0;
         double deltaRadius;
-        int amountOfRanks;
         int currentRank;
-        int ranks;
-        int rest = 0;
-        int n = 0;
         int nodeId = 0;
+        int amountOfRanks =(int) xy[xy.length - 1][6];
+        long base;
+        int rest;
+        int kk = 0;
+        boolean isFirst = true;
 
-        if (xy.length >= 1)
-            amountOfRanks =(int) xy[xy.length - 1][6];
-        else
-            amountOfRanks = 1;
-
-        if (amountOfRanks > 10) {
-            ranks = (amountOfRanks / 10);
+        if (amountOfRanks >= 10) {
+            base = (long)amountOfRanks / 10;
             rest = amountOfRanks % 10;
             amountOfRanks = 10;
         }
-
-        int[][] circles = new int[amountOfRanks][2];
-        for (int j = 0; j < amountOfRanks; j++) {
-            if (j < amountOfRanks - rest) {
-                n++;
-                circles[j][0] = n;
-                circles[j][1] = n;
-            }
-            else {
-                n++;
-                circles[j][0] = n;
-                n++;
-                circles[j][1] = n;
-            }
+        else {
+            base = 1;
+            rest = 0;
         }
 
-        if (amountOfRanks > 1)
-            deltaRadius = 290 / (amountOfRanks - 1);
-        else
-            deltaRadius = 290 / 2;
+        int[] rankList = new int[amountOfRanks];
 
-        while (i < circles.length) {
-            Circle circle = new Circle();
-            Circle circleRange = new Circle();
+        for (int k = 1; k <= amountOfRanks; k++){
+            if (k > amountOfRanks - rest) {
+                kk++;
+                rankList[k - 1] = ((int)base * k) + kk;
+            }
+            else
+                rankList[k - 1] = (int)base * k;
+        }
 
-            int range1 = circles[i][0];
-            int range2 = circles[i][1];
+        deltaRadius = 290 / amountOfRanks;
+        radius+= deltaRadius / amountOfRanks;
 
+        while (i < rankList.length) {
+            Circle circle;
+            Circle circleRange;
             currentRank = (int)xy[nodeId][6];
 
-            while (currentRank >= range1 && currentRank <= range2 && nodeId < xy.length - 1) {
-                if (nodeId == 0 || currentRank != (int)xy[nodeId - 1][6]) {
-                    if (currentRank == range1 && currentRank > circles[0][1]) {
-                        radius += deltaRadius;
-                        circleRange = new Circle(x,x,radius);
-                        circleRange.setFill(null);
-                        circleRange.setStrokeWidth(1);
-                        circleRange.setStroke(Color.BLACK);
-                        group1.getChildren().addAll(circleRange);
-                    }
-
-                    NodesOnCircles node = NodesOnCircles.generateRandomNodes(300,300, radius);
-                    circle = new Circle(node.getX(), node.getY(),2);
-                    circle.setId(Integer.toString((int) xy[nodeId][0]) + "\t" + xy[nodeId][3]);
-
-                    group1.getChildren().addAll(circle);
-                    Circle finalCircle = circle;
-                    circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-                        finalCircle.setFill(Color.RED);
-                        selectedNodeOnCircles.setVisible(true);
-                        selectedNodeOnCircles.setText("Selected node: " + finalCircle.getId());
-                    });
-                }
-                else {
-                    NodesOnCircles node = NodesOnCircles.generateRandomNodes(300,300, radius);
-                    circle = new Circle(node.getX(), node.getY(),2);
-                    circle.setId(Integer.toString((int) xy[nodeId][0]) + "\t" + xy[nodeId][3]);
-                    group1.getChildren().addAll(circle);
-                    Circle finalCircle = circle;
-                    circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-                        finalCircle.setFill(Color.RED);
-                        selectedNodeOnCircles.setVisible(true);
-                        selectedNodeOnCircles.setText("Selected node: " + finalCircle.getId());
-                    });
-                }
-                nodeId++;
-                currentRank = (int)xy[nodeId][6];
+            if (currentRank > rankList[i] || isFirst) {
+                radius += deltaRadius;
+                circleRange = new Circle(x, x, radius);
+                circleRange.setFill(null);
+                circleRange.setStrokeWidth(1);
+                circleRange.setStroke(Color.GRAY);
+                groupCirclesAndNodes.getChildren().addAll(circleRange);
+                if (isFirst)
+                    isFirst = false;
+                else
+                    i++;
             }
-            i++;
+
+            NodesOnCircles node = NodesOnCircles.generateRandomNodes(300,300, radius);
+            circle = new Circle(node.getX(), node.getY(),2);
+            circle.setId(Integer.toString((int) xy[nodeId][0]) + "\t" + xy[nodeId][3]);
+            groupCirclesAndNodes.getChildren().addAll(circle);
+            Circle finalCircle = circle;
+            circle.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+                finalCircle.setFill(Color.RED);
+                selectedNodeOnCircles.setVisible(true);
+                selectedNodeOnCircles.setText("Selected node: " + finalCircle.getId());
+            });
+
+            if (nodeId < xy.length - 1)
+                nodeId++;
+            else
+                break;
         }
-        return group1;
+        return groupCirclesAndNodes;
     }
 
 
@@ -663,9 +602,9 @@ public class Scenes {
         subScene.setTranslateX(400);
         subScene.setTranslateY(50);
         SceneGestures sceneGestures = new SceneGestures(canvas);
-        subScene.addEventFilter( MouseEvent.MOUSE_PRESSED, sceneGestures.getOnMousePressedEventHandler());
-        subScene.addEventFilter( MouseEvent.MOUSE_DRAGGED, sceneGestures.getOnMouseDraggedEventHandler());
-        subScene.addEventFilter( ScrollEvent.ANY, sceneGestures.getOnScrollEventHandler());
+        subScene.addEventFilter(MouseEvent.MOUSE_PRESSED, sceneGestures.getOnMousePressedEventHandler());
+        subScene.addEventFilter(MouseEvent.MOUSE_DRAGGED, sceneGestures.getOnMouseDraggedEventHandler());
+        subScene.addEventFilter(ScrollEvent.ANY, sceneGestures.getOnScrollEventHandler());
 
         graphMenu.getChildren().addAll(btnBack, btnConnectionsList, btnNodesOnCircles, btnNodesOnMap);
         graphMenu.setAlignment(Pos.TOP_LEFT);
@@ -797,7 +736,6 @@ public class Scenes {
         graphMenu.setAlignment(Pos.TOP_LEFT);
         graphMenu.setPadding(new Insets(30, 30, 30, 30));
         graphMenu.setSpacing(20);
-
 
         selectedNodeOnMap.setFont(new Font(20));
         selectedNodeOnMap.setVisible(false);
