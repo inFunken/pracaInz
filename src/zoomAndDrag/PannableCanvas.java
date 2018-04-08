@@ -6,7 +6,7 @@ import javafx.scene.layout.Pane;
 
 public class PannableCanvas extends Pane {
 
-    DoubleProperty scale = new SimpleDoubleProperty(1.0);
+    DoubleProperty scale = new SimpleDoubleProperty(0.8);
 
     public PannableCanvas() {
         setPrefSize(600, 600);
