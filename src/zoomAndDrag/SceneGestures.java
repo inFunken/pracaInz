@@ -17,18 +17,17 @@ public class SceneGestures {
         this.canvas = canvas;
     }
 
-    public EventHandler<ScrollEvent> getOnScrollEventHandler() {
-        return scrollEventHandler;
+    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {
+        return mousePressEventHandler;
     }
     public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {
         return mouseDragEventHandler;
     }
-    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {
-        return mousePressEventHandler;
+    public EventHandler<ScrollEvent> getOnScrollEventHandler() {
+        return scrollEventHandler;
     }
 
     private EventHandler<MouseEvent> mousePressEventHandler = new EventHandler<MouseEvent>() {
-
         public void handle(MouseEvent event) {
 
             if( !event.isSecondaryButtonDown())
@@ -44,7 +43,7 @@ public class SceneGestures {
 
     private EventHandler<MouseEvent> mouseDragEventHandler = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
-            if( !event.isSecondaryButtonDown())
+            if (!event.isSecondaryButtonDown())
                 return;
 
             canvas.setTranslateX(dragScene.translateAnchorX + event.getSceneX() - dragScene.mouseAnchorX);
@@ -55,7 +54,6 @@ public class SceneGestures {
     };
 
     private EventHandler<ScrollEvent> scrollEventHandler = new EventHandler<ScrollEvent>() {
-
         @Override
         public void handle(ScrollEvent event) {
 
@@ -68,20 +66,20 @@ public class SceneGestures {
             else
                 scale *= delta;
 
-            scale = clamp(scale, MIN_SCALE, MAX_SCALE);
+            scale = keepInRange(scale, MIN_SCALE, MAX_SCALE);
 
-            double f = (scale / oldScale)-1;
-            double dx = (event.getSceneX() - (canvas.getBoundsInParent().getWidth()/2 + canvas.getBoundsInParent().getMinX()));
-            double dy = (event.getSceneY() - (canvas.getBoundsInParent().getHeight()/2 + canvas.getBoundsInParent().getMinY()));
+            double f = (scale / oldScale) - 1;
+            double dx = (event.getSceneX() - (canvas.getBoundsInParent().getWidth() / 2 + canvas.getBoundsInParent().getMinX()));
+            double dy = (event.getSceneY() - (canvas.getBoundsInParent().getHeight() / 2 + canvas.getBoundsInParent().getMinY()));
 
-            canvas.setScale( scale);
-            canvas.setPivot(f*dx, f*dy);
+            canvas.setScale(scale);
+            canvas.setPivot(f * dx, f * dy);
 
             event.consume();
         }
     };
     
-    public static double clamp( double value, double min, double max) {
+    public static double keepInRange( double value, double min, double max) {
 
         if(Double.compare(value, min) < 0)
             return min;
